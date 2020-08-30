@@ -105,7 +105,7 @@ cache 数据存储策略:
 
 那设置invalid状态一定需要等待其他cpu的确认吗，毕竟其他cpu确认后，也会直接覆盖其他cpu的值
 软件行业的真理，增加间接层解决问题。一种方式就是增加store buffer，CPU设置带store buffer
-后直接进行下一步工作，store buffer负责通知其他CPU。
+后直接进行下一步工作，等到其他CPU过来请求访问时候，在从store buffer转移到cache line。
 
 ![avatar](cpu_store.jpg) 
 软件行业的另外一个真理，引入间接层解决问题，我们也引入一个新问题。
