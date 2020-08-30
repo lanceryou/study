@@ -96,7 +96,7 @@ cache 数据存储策略:
 
 通过MESI协议我们可以知道数据存储一旦涉及CPU之间同步比较耗性能:
 + 当读取的cache状态invalid时，需要从其他cpu甚至需要从内存读取数据
-+ 设置cache状态为invalid时需要其他CPU的确认，（为什么，假如只有一个cpu有cache）
++ 设置cache状态为invalid时需要其他CPU的确认
 
 应用需要关注的点:
 + 多线程下需要关注false sharing，假设int a[2]， 多线程环境下CPU 0 不停读取a[0], CPU 1更新a[1]，
