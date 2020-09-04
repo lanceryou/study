@@ -73,8 +73,6 @@ TCP 头设计
 
 ### 如何建立可靠连接
 
-![avatar](connection.png) 
-
 #### ISN 生成
 
 RFC793 说明了ISN的生成 The generator is bound to a (possibly fictitious) 32 bit clock 
@@ -92,6 +90,9 @@ F：单向散列哈希函数
 其他不解释了
 
 #### RFC793 建立连接
+
+![avatar](connection.png) 
+
 RFC793说明了为什么需要3次握手 The principle reason for the three-way handshake is to prevent old
  duplicate connection initiations from causing confusion. 
 
@@ -101,6 +102,7 @@ RFC793说明了为什么需要3次握手 The principle reason for the three-way 
 #### RFC 7413 建立连接
 
 ![avatar](fast_open.png) 
+
 3次握手性能一般（特别是在弱网环境下），Google研究发现TCP三次握手是页面延迟时间的重要组成部分，所以他们提出了
 TFO：在TCP握手期间交换数据，这样可以减少一次RTT。
 
