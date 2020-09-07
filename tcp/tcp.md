@@ -131,6 +131,78 @@ Fast Retransmit 解决了超时等待问题，但是无法解决到底传输什�
 
 ### 流控机制
 
+#### 滑动窗口 （Sliding Window）
+
+滑动窗口的意义在于避免服务端拥塞，与sack类似，服务端通知发送端还能发送的数据窗口大小。使得发送端可以动态
+调整发送的数据大小。
+
+![avatar](sliding_window.jpg) 
+
+接收方还可以处理的数据量：
+
+AdvertisedWindow = MaxRcvBuffer-(LastByteRcvd-LastByteRead)
+
+窗口内剩余可发送的数据大小：
+
+EffectiveWindow = AdvertisedWindow -(LastByteSent-LastByteAcked)
+
+一旦服务端窗口大小为0， 发送端通过Zero Window Probe探测服务端窗口大小，多次是0可能会RST连接
+
+### 拥塞控制
+
+流控机制解决的是端到端之间的拥塞，tcp居然还考虑整个网络的拥塞情况，拥塞处理的流程主要是:
++ 爬升期(slow start)
++ 稳定期(congestion avoidance):   
++ 下降期(congestion control)
++ 恢复期(fast recover)
+
+考虑网络的拥塞情况主要基于以下方式:
++ 基于丢包
+    - Reno
+    
+    适用场景: 低带宽，低延时(假如rtt很大导致拥塞窗口增长很慢，带宽利用率低)
+    - Cubic
+    
+    适用场景: 高带宽、低丢包率网络，能够有效利用带宽
+    - BIC
+    
+总的来说基于丢包的拥塞算法无法处理Buffer bloat，对延时算法不公平
++ 基于时延
+    - Vegas
+    
+    无法处理bufferbloat，公平性不够，vegas根据rtt判断拥塞退让很可能被其他协议占用带宽。
+    - Fast TCP
++ 基于链路容量
+    - BBR
+    
+    适用场景: 高带宽、高时延、有一定丢包率的长肥网络，可以有效降低传输时延，并保证较高的吞吐量
+    - Westwood
++ 基于学习
+    - JetMax
+
+更多算法可以参考下面参考资料TCP_congestion_control链接， 拥塞控制应该是tcp最复杂部分，
+需要根据场景选择不同的算法。
+
+## 现实中的tcp
+
+### tcp性能问题
+
+#### delay ack与Nagle同时开启
+
+Nagle 与delay ack解决的问题是一致的，只是一个针对发送端，一个针对服务端。但是一旦一起用就很可能出现性能问题。
+
+场景: client要发送一个http请求给server，这个请求有1600个bytes，握手的MSS是1460，那么这1600个bytes就会分成2个TCP包，
+第一个包1460，剩下的140bytes放在第二个包。第一个包发出去后，server收到第一个包，因为delay ack所以没有回复ack，
+同时因为server没有收全这个HTTP请求，所以也没法回复HTTP response。
+client这边开启了Nagle算法（默认开启）第二个包比较小（140<MSS),第一个包的ack还没有回来，那么第二个包就不发了，
+等！互相等！一直到Delay Ack的Delay时间到了
+
+#### tcp全连接队列溢出
+
+服务端建立连接分为半连接队列（收到syn包 回复了syn ack）， 与全连接队列（收到发送端ack包， 从半连接队列转移到全连接队列）
+假如服务端全队列满了，会忽略发送端发过来的ack包，而发送端误认为连接已经建立，发送data后无法接到ack，进入重传最后发起断开。
+
+### tcp安全问题
 
 
 ### 参考资料:
@@ -142,3 +214,7 @@ https://tools.ietf.org/html/rfc2581
 https://tools.ietf.org/html/rfc7413
 
 http://static.googleusercontent.com/media/research.google.com/zh-CN/us/pubs/archive/37517.pdf
+
+https://en.wikipedia.org/wiki/TCP_congestion_control
+
+http://jm.taobao.org/2017/06/01/20170601/
