@@ -222,9 +222,7 @@ C伪造A 发起syn请求，B主动发RST请求，强制关闭A的连接
 伪造A的包 难点在构造seq和获取source port。
 ### tcp 内核
 
-#### connect
-
-#### accept
+#### connect和accept
 
 #### send
 
