@@ -204,6 +204,7 @@ client这边开启了Nagle算法（默认开启）第二个包比较小（140<MS
 
 ### tcp安全问题
 
+tcp的设计非常复杂，复杂意味着熵很大，意味着可能有很多漏洞，下面简单介绍几种攻击。
 #### syn洪水攻击
 
 发送端发送伪造的syn请求后忽略服务方推送的syn ack，服务端保持在半连接队列，等待超时重传。
@@ -223,6 +224,39 @@ C伪造A 发起syn请求，B主动发RST请求，强制关闭A的连接
 ### tcp 内核
 
 #### connect和accept
+
+![avatar](connect_accept.png)
+
+应用发起connect可以选择non-block或者block，选择非阻塞的话发送syn后
+会返回EINPROGRESS错误标示连接正在进行，需要用select epoll等待可写。
+
+connect 需要处理的错误
++ 连接中的错误
+    - EINPROGRESS Operation now in progress
+    - EINTR 系统调用的执行由于捕获中断而中止
+    - EISCONN Transport endpoint is already connected
+    
+应用端处理 用epoll，select等待可写事件
++ 重试错误
+    - EAGAIN Resource temporarily unavailable
+    - EADDRINUSE 地址被占用
+    - EADDRNOTAVAIL 端口非正常
+    - ECONNREFUSED 远程地址并没有处于监听状态
+    - ENETUNREACH 不可达
+应用端可以关闭当前连接，等待重试
+
++ 无法恢复错误
+   
+应用直接关闭连接     
+    
+同理服务端accept也可以采用非阻塞模式，也需要用select epoll等待可读
+
+accept 需要处理的错误:
++ 并发数过多错误
+    - EMFILE 
+
+服务端可以利用一个idle连接，当发生EMFILE错误释放idle连接，然后accept一个fd，在释放这个fd通知发送端，重新复用idle连接
+
 
 #### send
 
