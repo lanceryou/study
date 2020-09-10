@@ -257,14 +257,21 @@ accept 需要处理的错误:
 
 服务端可以利用一个idle连接，当发生EMFILE错误释放idle连接，然后accept一个fd，在释放这个fd通知发送端，重新复用idle连接
 
-
 #### send
 
+![avatar](send.png)
+
+应用发起send，当处于非阻塞模式下，连接没有建立的话直接返回EAGAIN。应用通过select epoll继续监听连接变化。
+在非阻塞模式下，应用需要注意写入数据长度问题，当没有全部发送成功，需要根据select epoll监听可写写入剩下数据。
+
+应用还需要了解send成功不代表数据已经到达服务端，只是代表内核尽力发送。这也是为什么End to End Argument反复
+强调端到端的可靠通信，只能通过通信两端的application层来保证。
 #### recv
 
 #### close
 
-### tcp 应用
+### tcp 框架
++ reactor模型
 
 ### 参考资料:
 
