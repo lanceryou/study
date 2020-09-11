@@ -272,6 +272,34 @@ accept 需要处理的错误:
 
 ### tcp 框架
 + reactor模型
++ proactor模型
+
+#### reactor
+
+![avatar](reactor.jpg)
+
+Reactor模式是基于事件驱动的设计模式,逆置了事件处理流程，从应用程序主动调用某个API处理到注册感兴趣的event，
+当event发生时候回调应用程序注册接口。（IOC的应用）
+
+Reactor模型主要3个组件组成:
++ Reactor Dispatcher
++ Demultiplexer (select epoll io复用组件封装)
++ Event 针对Handle IO事件封装（Handle 在这里主要是fd）
+
+Reactor Dispatcher组件是reactor模型的核心，负责整个模型的启动和驱动。
+Event注册感兴趣的事件到Dispatcher，Dispatcher通过Demultiplexer进行事件分离通知。
+
+#### Multi-Reactor 模型
+
+![avatar](multi-reactor.png)
+
+Multi-Reactor 相比Reactor 主要的优化是基于tcp的特点分离出IO操作线程与工作线程。优点是当应用程序慢时候不影响IO事件
+（具体原因可参考accept的分析）
+
+#### select 实现
+
+#### epoll 实现
+
 
 ### 参考资料:
 
@@ -286,3 +314,7 @@ http://static.googleusercontent.com/media/research.google.com/zh-CN/us/pubs/arch
 https://en.wikipedia.org/wiki/TCP_congestion_control
 
 http://jm.taobao.org/2017/06/01/20170601/
+
+https://web.mit.edu/Saltzer/www/publications/endtoend/endtoend.pdf
+
+http://www.laputan.org/pub/sag/reactor.pdf
