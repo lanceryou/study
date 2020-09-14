@@ -298,7 +298,74 @@ Multi-Reactor 相比Reactor 主要的优化是基于tcp的特点分离出IO操�
 
 #### select 实现
 
+![avatar](select.png)
+
+
+select 优缺点:
+
+优点 实现简单，fd比较少 很活跃的情况下效率很高
+
+缺点 支持的fd数量有限，fd数量越大，扫描效率越低
+
+适用场景 监听的fd比较少，fd活跃
+
 #### epoll 实现
+
+epoll的核心是红黑树管理需要监听的fd和相关event，同时采用就绪队列规避select的缺点，
+直接访问就绪队列就知道event信息。
+
+```c
+struct eventpoll {
+	/* Wait queue used by sys_epoll_wait() */
+	wait_queue_head_t wq; // 调用epollwait的等待队列
+
+	/* Wait queue used by file->poll() */
+	wait_queue_head_t poll_wait; // 调用poll的等待队列
+
+	/* List of ready file descriptors */
+	struct list_head rdllist; // 就绪队列
+
+	/* RB tree root used to store monitored fd structs */
+	struct rb_root_cached rbr; // fd管理器
+
+	/*
+	 * This is a single linked list that chains all the "struct epitem" that
+	 * happened while transferring ready events to userspace w/out
+	 * holding ->lock.
+	 */
+	struct epitem *ovflist; // 备选就绪队列
+
+	/* wakeup_source used when ep_scan_ready_list is running */
+	struct wakeup_source *ws;
+	
+	...
+};
+
+```
+
+红黑树不好画直接描述步骤，省略很多细节（比如锁， 参数校验）
+
+epoll_ctl 支持3种状态EPOLL_CTL_ADD（最复杂），EPOLL_CTL_MOD，EPOLL_CTL_DEL
+
+epoll_ctl_EPOLL_CTL_ADD:
++ 初始化epitem
++ 设置poll_wait回调函数
++ poll等待回调
++ 插入红黑树
++ 产生事件，唤醒wq等待队列
+
+epoll_wait:
++ 计算睡眠超时时间
++ 查询是否有准备好事件（查看就绪队列和备选就绪队列是否为空）
+    - 有准备好事件执行 send_events
+    - 没有准备好事件执行 fetch_events
++ fetch_events
+    - 设置当前进程为可中断睡眠状态
+    - 查询是否有准备好事件（没有直接睡眠，等待唤醒， 有直接唤醒进程 执行send）
++ send_events
+    - 拷贝事件信息到应用层（假如是LT模式，重新加入就绪队列）
+
+#### io_uring
 
 
 ### 参考资料:
