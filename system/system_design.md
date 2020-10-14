@@ -109,8 +109,6 @@
 > + 组件封装 (db, transport, log, redis, registry， broker， metrics) > (distLock, Distributed Tracing, hystrix)
 + 输出领域业务模型
 
-![avatar](micro.png) 
-
 
 #### 例子2 电商营销系统
 
